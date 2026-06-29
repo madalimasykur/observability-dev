@@ -1,0 +1,69 @@
+#
+# Run this stack from the repository root so ${PWD} resolves to this project.
+services:
+  opensearch:
+    image: docker.io/opensearchproject/opensearch:3.7.0
+    container_name: observability-opensearch
+    restart: unless-stopped
+    userns_mode: keep-id
+    environment:
+      - cluster.name=observability
+      - node.name=opensearch-node1
+      - discovery.type=single-node
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD}"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+      - "host.docker.internal:host-gateway"
+      - "madalimasykur.mylab.local:host-gateway"
+    volumes:
+      - ${PWD}/opensearch/data:/usr/share/opensearch/data:Z
+      - ${PWD}/opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml:Z
+    networks:
+      - observability
+
+  data-prepper:
+    image: docker.io/opensearchproject/data-prepper:2.15.1
+    container_name: observability-data-prepper
+    restart: unless-stopped
+    command: ["/usr/share/data-prepper/bin/data-prepper"]
+    environment:
+      - "JVM_OPTS=-Xms256m -Xmx256m"
+    ports:
+      - "4900:4900"
+      - "21890:21890"
+    depends_on:
+      - opensearch
+    volumes:
+      - ${PWD}/data-prepper/config/data-prepper-config.yaml:/usr/share/data-prepper/config/data-prepper-config.yaml:ro,Z
+      - ${PWD}/data-prepper/pipelines:/usr/share/data-prepper/pipelines:ro,Z
+    networks:
+      observability:
+        aliases:
+          - data-prepper
+
+  opensearch-dashboards:
+    image: docker.io/opensearchproject/opensearch-dashboards:3.7.0
+    container_name: observability-opensearch-dashboards
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    depends_on:
+      - opensearch
+      - data-prepper
+    volumes:
+      - ${PWD}/opensearch/config/opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml:ro,Z
+    networks:
+      - observability
+
+networks:
+  observability:
+    external: true
+    name: observability

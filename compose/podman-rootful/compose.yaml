@@ -1,0 +1,19 @@
+#
+# Run this stack against the rootful Podman socket:
+#   CONTAINER_HOST=unix:///run/podman/podman.sock podman-compose -f compose/podman-rootful/compose.yaml up -d
+services:
+  podman-root-exporter:
+    image: docker.io/omnibrian/podman-exporter:latest
+    container_name: observability-podman-root-exporter
+    user: "0:0"
+    restart: unless-stopped
+    security_opt:
+      - label=disable
+    command:
+      - "--web.listen-address=:9101"
+      - "--podman.socket=/var/run/podman/podman.sock"
+      - "--log.level=info"
+    ports:
+      - "9101:9101"
+    volumes:
+      - /run/podman/podman.sock:/var/run/podman/podman.sock:ro

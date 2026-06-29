@@ -1,0 +1,109 @@
+#
+# Run this stack from the repository root so ${PWD} resolves to this project.
+services:
+  prometheus:
+    image: docker.io/prom/prometheus:latest
+    container_name: observability-prometheus
+    user: "65534:65534"
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+      - "host.docker.internal:host-gateway"
+      - "madalimasykur.mylab.local:host-gateway"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+      - "--web.enable-remote-write-receiver"
+      - "--enable-feature=exemplar-storage"
+    volumes:
+      - ${PWD}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro,Z
+      - ${PWD}/data/prometheus:/prometheus:Z
+    networks:
+      - observability
+
+  grafana:
+    image: docker.io/grafana/grafana:latest
+    container_name: observability-grafana
+    user: "472:0"
+    restart: unless-stopped
+    ports:
+      - "3330:3000"
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+      - "host.docker.internal:host-gateway"
+      - "madalimasykur.mylab.local:host-gateway"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_METRICS_ENABLED: "true"
+      GF_USERS_ALLOW_SIGN_UP: "true"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ${PWD}/data/grafana:/var/lib/grafana:Z
+      - ${PWD}/grafana/provisioning:/etc/grafana/provisioning:ro,Z
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - observability
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: observability-node-exporter
+    user: "65534:65534"
+    restart: unless-stopped
+    pid: host
+    command:
+      - "--web.listen-address=0.0.0.0:9100"
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run|var/lib/containers/.+|var/lib/docker/.+)($$|/)"
+      - "--collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$$"
+    volumes:
+      - /:/host:ro,rslave
+    ports:
+      - "9100:9100"
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+      - "host.docker.internal:host-gateway"
+      - "madalimasykur.mylab.local:host-gateway"
+    networks:
+      - observability
+
+  loki:
+    image: docker.io/grafana/loki:3.5.5
+    container_name: observability-loki
+    user: "10001:10001"
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command:
+      - "-config.file=/etc/loki/local-config.yaml"
+    volumes:
+      - ${PWD}/loki/loki.yml:/etc/loki/local-config.yaml:ro,Z
+      - ${PWD}/data/loki:/loki:Z
+    networks:
+      - observability
+
+  promtail:
+    image: docker.io/grafana/promtail:3.5.5
+    container_name: observability-promtail
+    restart: unless-stopped
+    command:
+      - "-config.file=/etc/promtail/config.yml"
+    volumes:
+      - ${PWD}/promtail/promtail.yml:/etc/promtail/config.yml:ro,Z
+      - ${PWD}/logs:/var/log/order-sample-service:ro,Z
+    depends_on:
+      - loki
+    networks:
+      - observability
+
+networks:
+  observability:
+    external: true
+    name: observability
