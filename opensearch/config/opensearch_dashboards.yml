@@ -1,0 +1,27 @@
+server.host: 0.0.0.0
+
+opensearch.hosts: [https://opensearch:9200]
+opensearch.ssl.verificationMode: none
+opensearch.username: kibanaserver
+opensearch.password: kibanaserver
+opensearch.requestHeadersAllowlist: [authorization, securitytenant]
+
+opensearch_security.multitenancy.enabled: true
+opensearch_security.multitenancy.tenants.preferred: [Private, Global]
+opensearch_security.readonly_mode.roles: [kibana_read_only]
+opensearch_security.cookie.secure: false
+
+savedObjects.permission.enabled: true
+workspace.enabled: true
+data_source.enabled: true
+opensearchDashboards.dashboardAdmin.users: [admin]
+home.disableWelcomeScreen: false
+home.disableExperienceModal: true
+
+uiSettings:
+  defaults:
+    "theme:darkMode": false
+    "theme:version": "v9"
+  overrides:
+    "defaultRoute": "/app/workspace_initial"
+    "home:useNewHomePage": true
