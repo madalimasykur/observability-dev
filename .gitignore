@@ -1,0 +1,13 @@
+# Data
+data/*
+opensearch/data/*
+
+# Generated logs
+logs/*.log
+
+# Environment
+.env
+
+# Python
+__pycache__/*
+*.py[cod]
