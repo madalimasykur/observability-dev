@@ -1,0 +1,7 @@
+fastapi
+prometheus-client
+opentelemetry-api
+opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-sdk
+pydantic
+uvicorn
