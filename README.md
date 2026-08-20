@@ -19,7 +19,7 @@ The repository is intentionally split by compose file so each stack can be start
 - `data-prepper/pipelines/pipelines.yaml`: Data Prepper trace analytics pipelines
 - `opensearch/config/opensearch.yml`: OpenSearch node configuration
 - `opensearch/config/opensearch_dashboards.yml`: OpenSearch Dashboards configuration
-- `otel-collector/config.yml`: OpenTelemetry Collector fan-out to Tempo and Data Prepper
+- `otel-collector/config.yml`: OpenTelemetry Collector pipelines for traces, metrics, and logs
 - `.env`: local secrets and variables, including `OPENSEARCH_ADMIN_PASSWORD`
 
 ## Quick Start
@@ -37,6 +37,8 @@ podman-compose -f compose/opensearch/compose.yaml up -d
 ```
 
 For trace analytics in OpenSearch, run both the tracing stack and the OpenSearch stack so the collector can forward traces to Data Prepper.
+
+OTLP logs received by the collector are forwarded to Loki through its native OTLP HTTP endpoint. Start both the monitoring and tracing stacks to use this path; Grafana queries the stored logs from the provisioned Loki data source.
 
 ## OpenSearch At A Glance
 
