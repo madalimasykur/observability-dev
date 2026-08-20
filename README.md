@@ -25,10 +25,11 @@ The repository is intentionally split by compose file so each stack can be start
 Run all commands from the repository root, not from a compose subdirectory.
 
 1. Make sure the `observability` network already exists.
-2. Fill in `.env` with your local values.
+2. Copy `.env.example` to `.env`, then replace the example passwords with your local values.
 3. Start the stack you need:
 
 ```bash
+cp .env.example .env
 podman-compose -f compose/observability/compose.yaml up -d
 podman-compose -f compose/opensearch/compose.yaml up -d
 ```
