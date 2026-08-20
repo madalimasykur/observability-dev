@@ -309,7 +309,7 @@ podman-compose -f compose/opensearch/compose.yaml up -d
 If you want traces to show up in the `Observability` workspace, also start the tracing stack:
 
 ```bash
-podman-compose -f compose/trace/compose.yaml up -d
+podman-compose -f compose/observability/compose.yaml up -d
 ```
 
 Stop the stack:
@@ -395,7 +395,7 @@ If the `kibanaserver` account is wrong or does not match the OpenSearch security
 
 Check:
 
-- `compose/trace/compose.yaml` is running, not only the OpenSearch stack
+- `compose/observability/compose.yaml` is running, not only the OpenSearch stack
 - `otel-collector/config.yml` still exports traces to `data-prepper:21890`
 - `curl -s http://localhost:4900/list` shows the three trace pipelines
 - `podman logs observability-data-prepper` does not show OpenSearch sink write errors

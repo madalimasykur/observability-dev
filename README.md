@@ -1,9 +1,8 @@
 # Observability Dev
 
-A local Podman-based observability playground with separate stacks for:
+A local Podman-based observability playground with stacks for:
 
-- monitoring: Prometheus, Loki, Grafana
-- tracing: Tempo, OpenTelemetry Collector
+- observability: Prometheus, Loki, Grafana, Tempo, and OpenTelemetry Collector
 - search and analytics: OpenSearch, OpenSearch Dashboards, and Data Prepper
 - sample workload: `order-sample-service`
 
@@ -11,8 +10,7 @@ The repository is intentionally split by compose file so each stack can be start
 
 ## Layout
 
-- `compose/monitoring/compose.yaml`: main monitoring stack
-- `compose/trace/compose.yaml`: tracing stack
+- `compose/observability/compose.yaml`: metrics, logs, traces, and visualization stack
 - `compose/opensearch/compose.yaml`: OpenSearch + Data Prepper + OpenSearch Dashboards
 - `compose/podman-rootful/compose.yaml`: extra rootful Podman-specific services
 - `data-prepper/config/data-prepper-config.yaml`: Data Prepper server configuration
@@ -31,14 +29,13 @@ Run all commands from the repository root, not from a compose subdirectory.
 3. Start the stack you need:
 
 ```bash
-podman-compose -f compose/monitoring/compose.yaml up -d
-podman-compose -f compose/trace/compose.yaml up -d
+podman-compose -f compose/observability/compose.yaml up -d
 podman-compose -f compose/opensearch/compose.yaml up -d
 ```
 
 For trace analytics in OpenSearch, run both the tracing stack and the OpenSearch stack so the collector can forward traces to Data Prepper.
 
-OTLP logs received by the collector are forwarded to Loki through its native OTLP HTTP endpoint. Start both the monitoring and tracing stacks to use this path; Grafana queries the stored logs from the provisioned Loki data source.
+OTLP logs received by the collector are forwarded to Loki through its native OTLP HTTP endpoint. Grafana queries the stored logs from the provisioned Loki data source.
 
 ## OpenSearch At A Glance
 
