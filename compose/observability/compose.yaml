@@ -46,6 +46,7 @@ services:
     volumes:
       - ${PWD}/data/grafana:/var/lib/grafana:Z
       - ${PWD}/grafana/provisioning:/etc/grafana/provisioning:ro,Z
+      - ${PWD}/cert/root-ca.crt:/etc/ssl/certs/root-ca.crt:ro
     depends_on:
       - prometheus
       - loki
