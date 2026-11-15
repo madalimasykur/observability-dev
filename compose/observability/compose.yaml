@@ -7,7 +7,7 @@ services:
     user: "65534:65534"
     restart: unless-stopped
     ports:
-      - "9090:9090"
+      - "9091:9090"
     extra_hosts:
       - "host.containers.internal:host-gateway"
       - "host.docker.internal:host-gateway"
@@ -56,6 +56,7 @@ services:
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
     container_name: observability-node-exporter
+    hostname: madalimasykur
     user: "65534:65534"
     restart: unless-stopped
     pid: host
@@ -144,6 +145,23 @@ services:
     depends_on:
       - tempo
       - loki
+    networks:
+      - observability
+
+  podman-exporter:
+    image: docker.io/omnibrian/podman-exporter:latest
+    container_name: observability-podman-exporter
+    restart: unless-stopped
+    security_opt:
+      - label=disable
+    command:
+      - "--web.listen-address=:9101"
+      - "--podman.socket=/var/run/podman/podman.sock"
+      - "--log.level=info"
+    ports:
+      - "9101:9101"
+    volumes:
+      - /run/user/1000/podman/podman.sock:/var/run/podman/podman.sock:ro
     networks:
       - observability
 
