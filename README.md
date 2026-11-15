@@ -13,6 +13,7 @@ The repository is intentionally split by compose file so each stack can be start
 - `compose/observability/compose.yaml`: metrics, logs, traces, and visualization stack
 - `compose/opensearch/compose.yaml`: OpenSearch + Data Prepper + OpenSearch Dashboards
 - `compose/podman-rootful/compose.yaml`: extra rootful Podman-specific services
+- `kubernetes/otel-collector-service.yaml`: internal Kubernetes Service for OTLP ingestion
 - `data-prepper/config/data-prepper-config.yaml`: Data Prepper server configuration
 - `data-prepper/pipelines/pipelines.yaml`: Data Prepper trace analytics pipelines
 - `opensearch/config/opensearch.yml`: OpenSearch node configuration
@@ -35,6 +36,21 @@ podman-compose -f compose/opensearch/compose.yaml up -d
 ```
 
 For trace analytics in OpenSearch, run both the tracing stack and the OpenSearch stack so the collector can forward traces to Data Prepper.
+
+## Kubernetes Service DNS
+
+The Kubernetes manifest creates a `ClusterIP` Service named `otel-collector` in the `observability` namespace. Apply it with:
+
+```bash
+kubectl apply -f kubernetes/otel-collector-service.yaml
+```
+
+The collector workload must use the label `app.kubernetes.io/name: otel-collector` so the Service can route traffic to its Pods. Workloads in the cluster can then use:
+
+- OTLP gRPC: `otel-collector.observability.svc.cluster.local:4317`
+- OTLP HTTP: `http://otel-collector.observability.svc.cluster.local:4318`
+
+The shorter in-cluster names `otel-collector.observability.svc` and `otel-collector` also resolve from the appropriate namespace. This repository does not include a Kubernetes Deployment for the collector, so the Service is intentionally separate from the existing local Podman Compose stack.
 
 OTLP logs received by the collector are forwarded to Loki through its native OTLP HTTP endpoint. Grafana queries the stored logs from the provisioned Loki data source.
 
