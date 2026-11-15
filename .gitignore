@@ -1,3 +1,6 @@
+# Secret
+cert/*
+
 # Data
 data/*
 opensearch/data/*
