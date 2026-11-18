@@ -1,0 +1,130 @@
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+local.file_match "order_sample_service" {
+  path_targets = [
+    {
+      __path__     = "/var/log/order-sample-service/*.log",
+      job          = "order-sample-service",
+      service_name = "order-sample-service",
+    },
+  ]
+}
+
+loki.process "order_sample_service" {
+  stage.json {
+    expressions = {
+      timestamp = "timestamp",
+      level     = "level",
+      logger    = "logger",
+      event     = "event",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level  = "",
+      logger = "",
+      event  = "",
+    }
+  }
+
+  stage.timestamp {
+    source = "timestamp"
+    format = "RFC3339"
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.source.file "order_sample_service" {
+  targets        = local.file_match.order_sample_service.targets
+  forward_to     = [loki.process.order_sample_service.receiver]
+  tail_from_end  = true
+}
+
+loki.process "zot_service" {
+  stage.json {
+    expressions = {
+      timestamp   = "time",
+      level       = "level",
+      message     = "message",
+      module      = "module",
+      component   = "component",
+      method      = "method",
+      path        = "path",
+      status_code = "statusCode",
+      latency     = "latency",
+      username    = "username",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level       = "",
+      module      = "",
+      component   = "",
+      method      = "",
+      status_code = "",
+    }
+  }
+
+  stage.timestamp {
+    source = "timestamp"
+    format = "RFC3339Nano"
+  }
+
+  // Do not forward Zot's raw JSON headers and cookies to Loki.
+  stage.output {
+    source = "message"
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.source.journal "zot_service" {
+  matches    = "_SYSTEMD_USER_UNIT=zot.service"
+  max_age    = "12h"
+  labels = {
+    job          = "zot-service",
+    service_name = "zot-service",
+  }
+  forward_to = [loki.process.zot_service.receiver]
+}
+
+loki.process "sftpgo_service" {
+  stage.json {
+    expressions = {
+      level       = "level",
+      sender      = "sender",
+      message     = "message",
+      method      = "method",
+      resp_status = "resp_status",
+      elapsed_ms  = "elapsed_ms",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level       = "",
+      sender      = "",
+      method      = "",
+      resp_status = "",
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.source.journal "sftpgo_service" {
+  matches    = "_SYSTEMD_USER_UNIT=file-server.service"
+  max_age    = "12h"
+  labels = {
+    job          = "sftpgo-service",
+    service_name = "sftpgo-service",
+  }
+  forward_to = [loki.process.sftpgo_service.receiver]
+}

@@ -92,15 +92,25 @@ services:
     networks:
       - observability
 
-  promtail:
-    image: docker.io/grafana/promtail:3.5.5
-    container_name: observability-promtail
+  alloy:
+    image: docker.io/grafana/alloy:latest
+    container_name: observability-alloy
     restart: unless-stopped
+    user: "0:0"
+    security_opt:
+      - label=disable
     command:
-      - "-config.file=/etc/promtail/config.yml"
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - "/etc/alloy/config.alloy"
     volumes:
-      - ${PWD}/promtail/promtail.yml:/etc/promtail/config.yml:ro,Z
+      - ${PWD}/alloy/config.alloy:/etc/alloy/config.alloy:ro,Z
+      - ${PWD}/data/alloy:/var/lib/alloy/data:Z
       - ${PWD}/logs:/var/log/order-sample-service:ro,Z
+      - /run/log/journal:/run/log/journal:ro
+      - /var/log/journal:/var/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - loki
     networks:

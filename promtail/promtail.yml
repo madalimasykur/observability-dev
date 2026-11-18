@@ -31,3 +31,73 @@ scrape_configs:
           job: order-sample-service
           service_name: order-sample-service
           __path__: /var/log/order-sample-service/*.log
+
+  - job_name: zot-service
+    journal:
+      max_age: 12h
+      labels:
+        job: zot-service
+    relabel_configs:
+      - source_labels:
+          - __journal__systemd_user_unit
+        regex: zot.service
+        action: keep
+      - source_labels:
+          - __journal__systemd_user_unit
+        target_label: systemd_unit
+      - target_label: service_name
+        replacement: zot-service
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: time
+            level:
+            message:
+            module:
+            component:
+            method:
+            path:
+            status_code: statusCode
+            latency:
+            username:
+      - labels:
+          level:
+          module:
+          component:
+          method:
+          status_code:
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+      - output:
+          source: message
+
+  - job_name: sftpgo-service
+    journal:
+      max_age: 12h
+      labels:
+        job: sftpgo-service
+    relabel_configs:
+      - source_labels:
+          - __journal__systemd_user_unit
+        regex: file-server.service
+        action: keep
+      - source_labels:
+          - __journal__systemd_user_unit
+        target_label: systemd_unit
+      - target_label: service_name
+        replacement: sftpgo-service
+    pipeline_stages:
+      - json:
+          expressions:
+            level:
+            sender:
+            message:
+            method:
+            resp_status: resp_status
+            elapsed_ms: elapsed_ms
+      - labels:
+          level:
+          sender:
+          method:
+          resp_status:

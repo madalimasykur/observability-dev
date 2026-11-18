@@ -19,6 +19,7 @@ The repository is intentionally split by compose file so each stack can be start
 - `opensearch/config/opensearch.yml`: OpenSearch node configuration
 - `opensearch/config/opensearch_dashboards.yml`: OpenSearch Dashboards configuration
 - `otel-collector/config.yml`: OpenTelemetry Collector pipelines for traces, metrics, and logs
+- `obi/config.yml`: standalone OBI Config v2 that exports eBPF traces and metrics to the existing Collector
 - `.env`: local secrets and variables, including `OPENSEARCH_ADMIN_PASSWORD`
 
 ## Quick Start
@@ -99,4 +100,5 @@ Use config files for:
 ## Docs
 
 - [docs/README.md](docs/README.md)
+- [docs/ebpf.md](docs/ebpf.md)
 - [docs/opensearch.md](docs/opensearch.md)
