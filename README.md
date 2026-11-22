@@ -26,6 +26,24 @@ The repository is intentionally split by compose file so each stack can be start
 
 Run all commands from the repository root, not from a compose subdirectory.
 
+### Podman container metrics
+
+The Podman exporter uses a dedicated user-systemd API socket so Podman Desktop
+cannot replace the socket inode used by the exporter. Install and enable the
+units before creating the exporter container:
+
+```bash
+mkdir -p ~/.config/systemd/user
+install -m 0644 systemd/podman-exporter-api.service \
+  systemd/podman-exporter-api.socket ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now podman-exporter-api.socket
+```
+
+The socket unit creates `/run/user/1000/podman-exporter-api/`, which is mounted
+into `podman-exporter`. The API service starts automatically on the first scrape
+and remains independent of Podman Desktop.
+
 1. Make sure the `observability` network already exists.
 2. Copy `.env.example` to `.env`, then replace the example passwords with your local values.
 3. Start the stack you need:

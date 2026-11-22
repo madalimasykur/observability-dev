@@ -1,0 +1,16 @@
+[Unit]
+Description=Dedicated Podman API Service for Prometheus Exporter
+Requires=podman-exporter-api.socket
+After=podman-exporter-api.socket
+Documentation=man:podman-system-service(1)
+StartLimitIntervalSec=0
+
+[Service]
+Delegate=true
+Type=exec
+KillMode=process
+Environment=LOGGING=--log-level=info
+ExecStart=/usr/bin/podman $LOGGING system service --time=0
+
+[Install]
+WantedBy=default.target
