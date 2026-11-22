@@ -4,7 +4,7 @@ log_level: info
 resource:
   attributes:
     - name: service.namespace
-      value: local-dev
+      value: mylab
 
 tracer_provider:
   processors:

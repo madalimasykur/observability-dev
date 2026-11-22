@@ -59,6 +59,12 @@ loki.process "zot_service" {
       status_code = "statusCode",
       latency     = "latency",
       username    = "username",
+      client_ip   = "clientIP",
+      body_size   = "bodySize",
+      caller      = "caller",
+      func        = "func",
+      identity    = "identity",
+      goroutine   = "goroutine",
     }
   }
 
@@ -69,6 +75,8 @@ loki.process "zot_service" {
       component   = "",
       method      = "",
       status_code = "",
+      caller      = "",
+      func        = "",
     }
   }
 
@@ -82,6 +90,28 @@ loki.process "zot_service" {
     source = "message"
   }
 
+  // Keep useful structured context in the log line without forwarding Zot's
+  // raw headers, cookies, authorization values, or other sensitive metadata.
+  stage.pack {
+    labels = [
+      "level",
+      "module",
+      "component",
+      "method",
+      "path",
+      "status_code",
+      "latency",
+      "username",
+      "client_ip",
+      "body_size",
+      "caller",
+      "func",
+      "identity",
+      "goroutine",
+    ]
+    ingest_timestamp = false
+  }
+
   forward_to = [loki.write.local.receiver]
 }
 
@@ -93,6 +123,19 @@ loki.source.journal "zot_service" {
     service_name = "zot-service",
   }
   forward_to = [loki.process.zot_service.receiver]
+}
+
+loki.source.journal "cloudflared" {
+  matches = "_SYSTEMD_UNIT=cloudflared.service"
+  max_age = "12h"
+  path    = "/var/log/journal"
+
+  labels = {
+    job          = "cloudflared",
+    service_name = "cloudflared",
+  }
+
+  forward_to = [loki.write.local.receiver]
 }
 
 loki.process "sftpgo_service" {

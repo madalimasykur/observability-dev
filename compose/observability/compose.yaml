@@ -6,6 +6,12 @@ services:
     container_name: observability-prometheus
     user: "65534:65534"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     ports:
       - "9091:9090"
     extra_hosts:
@@ -30,6 +36,12 @@ services:
     container_name: observability-grafana
     user: "472:0"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
       - "3330:3000"
     extra_hosts:
@@ -60,6 +72,12 @@ services:
     hostname: madalimasykur
     user: "65534:65534"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9100/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     pid: host
     command:
       - "--web.listen-address=0.0.0.0:9100"
@@ -82,6 +100,12 @@ services:
     container_name: observability-loki
     user: "10001:10001"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/busybox/wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3100/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     ports:
       - "3100:3100"
     command:
@@ -97,8 +121,16 @@ services:
     container_name: observability-alloy
     restart: unless-stopped
     user: "0:0"
+    group_add:
+      - keep-groups
     security_opt:
       - label=disable
+    healthcheck:
+      test: ["CMD", "/bin/alloy", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     command:
       - "run"
       - "--server.http.listen-addr=0.0.0.0:12345"
@@ -121,6 +153,12 @@ services:
     container_name: observability-tempo
     user: "10001:10001"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/busybox/wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3200/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     command:
       - "-config.file=/etc/tempo/tempo.yml"
     ports:
@@ -138,8 +176,19 @@ services:
   otel-collector:
     image: docker.io/otel/opentelemetry-collector-contrib:0.154.0
     container_name: observability-otel-collector
-    user: "10001:10001"
+    # Match the host user so the systemd receiver can access its D-Bus bus
+    # without running the collector as root.
+    user: "1000:1000"
+    userns_mode: host
     restart: unless-stopped
+    security_opt:
+      - label=disable
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     command:
       - "--config=/etc/otelcol/config.yml"
     ports:
@@ -149,6 +198,10 @@ services:
       - "9464:9464"
     volumes:
       - ${PWD}/otel-collector/config.yml:/etc/otelcol/config.yml:ro,Z
+      - /run/user/1000/bus:/run/user/1000/bus:ro
+    environment:
+      XDG_RUNTIME_DIR: /run/user/1000
+      DBUS_SESSION_BUS_ADDRESS: unix:path=/run/user/1000/bus
     extra_hosts:
       - "host.containers.internal:host-gateway"
       - "host.docker.internal:host-gateway"

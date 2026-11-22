@@ -1,0 +1,46 @@
+file_format: "1.0"
+log_level: info
+
+resource:
+  attributes:
+    - name: service.name
+      value: cloudcli-service
+    - name: service.namespace
+      value: mylab
+
+tracer_provider:
+  processors:
+    - batch:
+        exporter:
+          otlp_grpc:
+            endpoint: "${OBI_OTLP_ENDPOINT:-http://127.0.0.1:4317}"
+            tls:
+              insecure: true
+
+meter_provider:
+  readers:
+    - periodic:
+        exporter:
+          otlp_grpc:
+            endpoint: "${OBI_OTLP_ENDPOINT:-http://127.0.0.1:4317}"
+            tls:
+              insecure: true
+        interval: 10000
+
+extensions:
+  obi:
+    version: "2.0"
+    capture:
+      policy:
+        default_action: exclude
+      rules:
+        - action: include
+          name: cloudcli-service
+          match:
+            process:
+              open_ports: "${OBI_OPEN_PORTS:-3030}"
+      instrumentation:
+        http:
+          enabled:
+            traces: true
+            metrics: true

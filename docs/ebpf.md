@@ -160,7 +160,7 @@ In Grafana Explore, select Tempo and query the detected target name, for example
 { resource.service.name = "ttyd" }
 ```
 
-Use `sftpgo` or `zot` when querying those container workloads. Existing spans
+Use `sftpgo-service` or `zot` when querying those container workloads. Existing spans
 created before removing the global service name can still be labeled
 `ebpf-service`; only new telemetry uses the derived target identity.
 

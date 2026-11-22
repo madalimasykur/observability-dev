@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenTelemetry eBPF Instrumentation for CloudCLI
+Documentation=https://opentelemetry.io/docs/zero-code/obi/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/obi/obi-cloudcli.env
+ExecStartPre=/usr/local/bin/obi config validate ${OBI_CONFIG_PATH}
+ExecStart=/usr/local/bin/obi --config=${OBI_CONFIG_PATH}
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+
+[Install]
+WantedBy=multi-user.target

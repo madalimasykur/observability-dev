@@ -10,6 +10,7 @@ logs/*.log
 
 # Environment
 .env
+obi/*.env
 
 # Python
 __pycache__/*

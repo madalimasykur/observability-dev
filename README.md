@@ -73,6 +73,10 @@ The shorter in-cluster names `otel-collector.observability.svc` and `otel-collec
 
 OTLP logs received by the collector are forwarded to Loki through its native OTLP HTTP endpoint. Grafana queries the stored logs from the provisioned Loki data source.
 
+The OpenTelemetry Collector also monitors the host user's `cloudcli.service` through
+the systemd receiver. The resulting `systemd.unit.state` metrics are exposed on the
+collector's Prometheus endpoint and scraped by the local Prometheus instance.
+
 ## OpenSearch At A Glance
 
 - OpenSearch is the storage, indexing, and query engine.
